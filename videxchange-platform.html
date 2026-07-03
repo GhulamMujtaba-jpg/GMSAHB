@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VidExchange — Video Engagement Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════ TOKENS ═══════════════════════════ */
+:root{
+  --bg:#090D1A; --bg-elev:#111827; --bg-card:#141B2D; --border:#1E2D4A;
+  --text:#F0EEFF; --text-dim:#8B92B8; --text-faint:#4A5280;
+  --purple:#A855F7; --pink:#EC4899; --cyan:#06B6D4; --green:#10B981;
+  --amber:#F59E0B; --red:#EF4444; --orange:#F97316; --indigo:#6366F1;
+  --grad-purple:linear-gradient(135deg,#A855F7,#6366F1);
+  --grad-pink:linear-gradient(135deg,#EC4899,#A855F7);
+  --grad-cyan:linear-gradient(135deg,#06B6D4,#3B82F6);
+  --grad-green:linear-gradient(135deg,#10B981,#06B6D4);
+  --grad-amber:linear-gradient(135deg,#F59E0B,#F97316);
+  --grad-red:linear-gradient(135deg,#EF4444,#EC4899);
+  --radius:16px; --shadow:0 8px 32px rgba(0,0,0,0.5);
+  --shadow-glow-purple:0 0 32px rgba(168,85,247,0.25);
+  --shadow-glow-pink:0 0 32px rgba(236,72,153,0.25);
+  --shadow-glow-cyan:0 0 32px rgba(6,182,212,0.25);
+}
+html[data-theme="light"]{
+  --bg:#F0F0FF; --bg-elev:#FFFFFF; --bg-card:#FAFAFF; --border:#E0DEFF;
+  --text:#1A1040; --text-dim:#5A5580; --text-faint:#9090B8;
+  --shadow:0 8px 24px rgba(100,80,200,0.1);
+  --shadow-glow-purple:0 0 24px rgba(168,85,247,0.15);
+  --shadow-glow-pink:0 0 24px rgba(236,72,153,0.15);
+  --shadow-glow-cyan:0 0 24px rgba(6,182,212,0.15);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;transition:background .3s,color .3s;}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif;}
+.mono{font-family:'JetBrains Mono',monospace;}
+a{color:inherit;text-decoration:none;}
+::selection{background:var(--purple);color:#fff;}
+input,select,textarea{font-family:'Inter',sans-serif;}
+
+/* ═══════════════════════════ SCREENS ═══════════════════════════ */
+.screen{display:none;} .screen.show{display:flex;}
+
+/* ═══════════════════════════ AUTH ═══════════════════════════ */
+.auth-bg{
+  min-height:100vh;width:100%;align-items:center;justify-content:center;
+  background:var(--bg);position:relative;overflow:hidden;
+}
+.auth-blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.18;pointer-events:none;}
+.auth-card{
+  position:relative;z-index:2;width:100%;max-width:400px;margin:24px;
+  background:var(--bg-card);border:1px solid var(--border);border-radius:24px;
+  padding:36px;box-shadow:var(--shadow);
+}
+.auth-logo-row{display:flex;align-items:center;gap:12px;margin-bottom:28px;}
+.logo-icon{width:44px;height:44px;border-radius:14px;background:var(--grad-purple);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:var(--shadow-glow-purple);}
+.logo-text{font-size:20px;font-weight:700;font-family:'Space Grotesk',sans-serif;letter-spacing:-.02em;}
+.logo-sub{font-size:10.5px;color:var(--text-faint);letter-spacing:.07em;text-transform:uppercase;}
+.auth-title{font-size:22px;font-weight:700;margin-bottom:4px;}
+.auth-sub{font-size:13px;color:var(--text-dim);margin-bottom:22px;}
+.auth-tabs{display:flex;gap:0;margin-bottom:22px;border-radius:12px;overflow:hidden;border:1px solid var(--border);}
+.auth-tab{flex:1;padding:10px;border:none;background:transparent;color:var(--text-dim);font-size:13px;font-weight:600;cursor:pointer;transition:background .2s,color .2s;}
+.auth-tab.active{background:var(--grad-purple);color:#fff;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase;}
+.field input,.field select,.field textarea{
+  width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);
+  background:var(--bg-elev);color:var(--text);font-size:13.5px;outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.field input:focus,.field select:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(168,85,247,.15);}
+.error-msg{font-size:12px;color:var(--red);margin-bottom:12px;display:none;padding:8px 12px;background:rgba(239,68,68,.1);border-radius:8px;border:1px solid rgba(239,68,68,.2);}
+
+/* ═══════════════════════════ BUTTONS ═══════════════════════════ */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:11px;border:none;font-size:13.5px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:transform .12s,opacity .12s,box-shadow .2s;}
+.btn:active{transform:scale(.97);}
+.btn-purple{background:var(--grad-purple);color:#fff;box-shadow:var(--shadow-glow-purple);}
+.btn-purple:hover{opacity:.9;box-shadow:0 0 40px rgba(168,85,247,.4);}
+.btn-pink{background:var(--grad-pink);color:#fff;box-shadow:var(--shadow-glow-pink);}
+.btn-pink:hover{opacity:.9;}
+.btn-cyan{background:var(--grad-cyan);color:#fff;box-shadow:var(--shadow-glow-cyan);}
+.btn-green{background:var(--grad-green);color:#fff;}
+.btn-amber{background:var(--grad-amber);color:#1a0a00;}
+.btn-ghost{background:var(--bg-elev);color:var(--text);border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--purple);}
+.btn-sm{padding:7px 13px;font-size:12px;}
+.btn-block{width:100%;justify-content:center;}
+
+/* ═══════════════════════════ APP SHELL ═══════════════════════════ */
+.app-shell{flex-direction:row;min-height:100vh;width:100%;}
+.sidebar{
+  width:252px;flex-shrink:0;background:var(--bg-elev);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto;
+}
+.side-logo{display:flex;align-items:center;gap:10px;padding:4px 8px 24px;}
+.side-logo .logo-icon{width:36px;height:36px;font-size:18px;border-radius:11px;}
+nav{display:flex;flex-direction:column;gap:3px;flex:1;}
+.nav-group-label{font-size:10px;font-weight:700;color:var(--text-faint);letter-spacing:.1em;text-transform:uppercase;padding:14px 12px 6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;color:var(--text-dim);font-size:13.5px;font-weight:500;cursor:pointer;border:none;background:none;text-align:left;width:100%;transition:background .15s,color .15s;}
+.nav-item:hover{background:var(--bg-card);color:var(--text);}
+.nav-item.active{background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(99,102,241,.15));color:var(--purple);border:1px solid rgba(168,85,247,.2);}
+.nav-item .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;}
+.side-foot{border-top:1px solid var(--border);padding-top:14px;margin-top:8px;display:flex;flex-direction:column;gap:8px;}
+.user-chip{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;background:var(--bg-card);border:1px solid var(--border);}
+.avatar{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;flex-shrink:0;}
+.avatar-sm{width:30px;height:30px;font-size:11px;}
+.avatar-md{width:38px;height:38px;font-size:14px;}
+.theme-btn{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border);cursor:pointer;font-size:12px;color:var(--text-dim);}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:var(--bg);}
+.topbar-left h2{font-size:18px;font-weight:700;}
+.topbar-left p{font-size:12px;color:var(--text-faint);margin-top:2px;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.content{padding:24px 28px 60px;flex:1;}
+.view{display:none;animation:fadein .3s ease;}
+.view.show{display:block;}
+@keyframes fadein{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+/* ═══════════════════════════ STAT CARDS ═══════════════════════════ */
+.grid{display:grid;gap:16px;}
+.g4{grid-template-columns:repeat(4,1fr);}
+.g3{grid-template-columns:repeat(3,1fr);}
+.g2{grid-template-columns:repeat(2,1fr);}
+.g-2-1{grid-template-columns:2fr 1fr;}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
+.glow-card-purple{box-shadow:var(--shadow),var(--shadow-glow-purple);}
+.glow-card-pink{box-shadow:var(--shadow),var(--shadow-glow-pink);}
+.glow-card-cyan{box-shadow:var(--shadow),var(--shadow-glow-cyan);}
+
+.stat-card{position:relative;overflow:hidden;}
+.stat-card .sc-accent{position:absolute;top:-20px;right:-20px;width:90px;height:90px;border-radius:50%;opacity:.12;filter:blur(20px);}
+.stat-card .sc-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px;}
+.stat-card .sc-label{font-size:11px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;}
+.stat-card .sc-val{font-size:26px;font-weight:700;font-family:'Space Grotesk',sans-serif;letter-spacing:-.02em;}
+.stat-card .sc-delta{font-size:11.5px;margin-top:6px;}
+.delta-up{color:var(--green);}
+.delta-down{color:var(--red);}
+.delta-neutral{color:var(--text-faint);}
+
+/* ═══════════════════════════ TABLE ═══════════════════════════ */
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{padding:11px 14px;text-align:left;color:var(--text-faint);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);background:var(--bg-elev);}
+td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--text-dim);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(168,85,247,.04);}
+.td-strong{color:var(--text);font-weight:600;}
+
+/* ═══════════════════════════ BADGES ═══════════════════════════ */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+.badge::before{content:'●';font-size:7px;}
+.badge-green{background:rgba(16,185,129,.13);color:var(--green);}
+.badge-amber{background:rgba(245,158,11,.13);color:var(--amber);}
+.badge-red{background:rgba(239,68,68,.13);color:var(--red);}
+.badge-purple{background:rgba(168,85,247,.13);color:var(--purple);}
+.badge-cyan{background:rgba(6,182,212,.13);color:var(--cyan);}
+
+/* ═══════════════════════════ SECTION HEADER ═══════════════════════════ */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.sec-title{font-size:15px;font-weight:700;letter-spacing:-.01em;}
+.sec-sub{font-size:12px;color:var(--text-faint);margin-top:2px;}
+
+/* ═══════════════════════════ PILLS / TABS ═══════════════════════════ */
+.pill-tabs{display:flex;gap:5px;background:var(--bg-elev);border:1px solid var(--border);padding:4px;border-radius:11px;width:fit-content;}
+.pill-tab{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer;border:none;background:none;transition:background .15s,color .15s;}
+.pill-tab.active{background:var(--grad-purple);color:#fff;}
+
+/* ═══════════════════════════ GRADIENT BANNER ═══════════════════════════ */
+.banner{border-radius:var(--radius);padding:24px 28px;color:#fff;position:relative;overflow:hidden;margin-bottom:20px;}
+.banner h2{font-size:22px;margin-bottom:6px;}
+.banner p{font-size:13px;opacity:.8;}
+.banner-blob{position:absolute;border-radius:50%;filter:blur(50px);opacity:.25;pointer-events:none;}
+
+/* ═══════════════════════════ POINTS PILL ═══════════════════════════ */
+.pts-pill{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(99,102,241,.15));border:1px solid rgba(168,85,247,.3);font-size:13px;font-weight:700;color:var(--purple);}
+
+/* ═══════════════════════════ VIDEO CARDS ═══════════════════════════ */
+.video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;}
+.vc{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:transform .2s,box-shadow .2s;}
+.vc:hover{transform:translateY(-4px);box-shadow:var(--shadow),var(--shadow-glow-purple);}
+.vc-thumb{aspect-ratio:16/9;background:linear-gradient(135deg,#1a0a2e,#0a1a2e);display:flex;align-items:center;justify-content:center;position:relative;font-size:36px;}
+.vc-thumb .play-btn{width:48px;height:48px;border-radius:50%;background:rgba(168,85,247,.8);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px rgba(168,85,247,.5);}
+.vc-body{padding:14px 16px;}
+.vc-title{font-size:13.5px;font-weight:600;margin-bottom:4px;line-height:1.4;}
+.vc-meta{font-size:11.5px;color:var(--text-faint);margin-bottom:12px;}
+.vc-foot{display:flex;align-items:center;justify-content:space-between;padding:0 16px 14px;}
+
+/* ═══════════════════════════ JAZZCASH WITHDRAWAL ═══════════════════════════ */
+.jc-card{border-radius:var(--radius);background:linear-gradient(135deg,#2d0a52,#1a0a3d);border:1px solid rgba(168,85,247,.3);padding:24px;box-shadow:var(--shadow),var(--shadow-glow-purple);}
+.jc-logo-row{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.jc-logo{background:linear-gradient(135deg,#CC0000,#FF4444);border-radius:12px;padding:8px 14px;font-size:16px;font-weight:800;color:#fff;letter-spacing:.02em;}
+.jc-badge{font-size:11px;color:rgba(168,85,247,.9);background:rgba(168,85,247,.1);padding:4px 10px;border-radius:999px;border:1px solid rgba(168,85,247,.3);}
+.withdraw-input{background:rgba(255,255,255,.07);border:1px solid rgba(168,85,247,.3);color:#fff;padding:12px 14px;border-radius:11px;width:100%;font-size:15px;font-family:'JetBrains Mono',monospace;margin:10px 0 16px;outline:none;}
+.withdraw-input:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(168,85,247,.2);}
+.withdraw-info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.wi-item{background:rgba(255,255,255,.05);border-radius:10px;padding:10px 12px;}
+.wi-label{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em;}
+.wi-val{font-size:15px;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace;margin-top:3px;}
+
+/* ═══════════════════════════ PROGRESS BAR ═══════════════════════════ */
+.prog-wrap{background:var(--border);border-radius:999px;height:7px;overflow:hidden;margin:6px 0;}
+.prog-fill{height:100%;border-radius:999px;transition:width 1s ease;}
+
+/* ═══════════════════════════ MODAL ═══════════════════════════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:28px;width:100%;max-width:440px;margin:20px;box-shadow:var(--shadow),var(--shadow-glow-purple);}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:6px;}
+.modal-sub{font-size:12.5px;color:var(--text-dim);margin-bottom:20px;}
+.success-icon{width:60px;height:60px;border-radius:50%;background:var(--grad-green);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 16px;box-shadow:0 0 30px rgba(16,185,129,.4);}
+
+/* ═══════════════════════════ EARNING ROW ═══════════════════════════ */
+.earn-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);}
+.earn-row:last-child{border-bottom:none;}
+.earn-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.earn-detail{flex:1;}
+.earn-title{font-size:13px;font-weight:600;}
+.earn-time{font-size:11.5px;color:var(--text-faint);}
+.earn-amt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13.5px;}
+
+/* ═══════════════════════════ NOTIFICATION DOT ═══════════════════════════ */
+.notif-btn{position:relative;width:36px;height:36px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.notif-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--red);border:2px solid var(--bg);}
+
+/* ═══════════════════════════ RESPONSIVE ═══════════════════════════ */
+@media(max-width:1100px){.g4{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:800px){
+  .sidebar{position:fixed;left:-260px;z-index:50;transition:left .25s ease;height:100vh;}
+  .sidebar.open{left:0;}
+  .g4,.g3{grid-template-columns:repeat(2,1fr);}
+  .g-2-1{grid-template-columns:1fr;}
+  .content{padding:18px 16px 50px;}
+  .topbar{padding:14px 16px;}
+  .hamburger{display:flex !important;}
+}
+@media(max-width:500px){.g4,.g3,.g2{grid-template-columns:1fr;}}
+.hamburger{display:none;background:none;border:none;color:var(--text);cursor:pointer;font-size:22px;width:36px;height:36px;align-items:center;justify-content:center;border-radius:9px;}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     AUTH SCREEN
+══════════════════════════════════════ -->
+<div class="screen show" id="authScreen" style="min-height:100vh;">
+  <div class="auth-bg" style="display:flex;">
+    <div class="auth-blob" style="width:400px;height:400px;background:var(--purple);top:-100px;left:-100px;"></div>
+    <div class="auth-blob" style="width:300px;height:300px;background:var(--pink);bottom:-80px;right:-80px;"></div>
+    <div class="auth-card">
+      <div class="auth-logo-row">
+        <div class="logo-icon">🎬</div>
+        <div>
+          <div class="logo-text">VidExchange</div>
+          <div class="logo-sub">Engagement Platform</div>
+        </div>
+      </div>
+      <h2 class="auth-title">Sign in to your account</h2>
+      <p class="auth-sub">Watch videos, earn points, grow your audience.</p>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login',this)">Sign In</button>
+        <button class="auth-tab" onclick="switchAuthTab('register',this)">Register</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div id="loginForm">
+        <div class="field"><label>Email Address</label><input id="li-email" type="email" placeholder="your@email.com"></div>
+        <div class="field"><label>Password</label><input id="li-pass" type="password" placeholder="••••••••"></div>
+        <div class="error-msg" id="li-err">Incorrect email or password.</div>
+        <button class="btn btn-purple btn-block" onclick="doLogin()">Sign In →</button>
+        <p style="font-size:11.5px;color:var(--text-faint);text-align:center;margin-top:14px;">Admin? Use your admin credentials to access the Admin Panel.</p>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="registerForm" style="display:none;">
+        <div class="field"><label>Full Name</label><input id="rg-name" type="text" placeholder="Your Name"></div>
+        <div class="field"><label>Email Address</label><input id="rg-email" type="email" placeholder="your@email.com"></div>
+        <div class="field"><label>Password</label><input id="rg-pass" type="password" placeholder="Min 8 characters"></div>
+        <div class="error-msg" id="rg-err">Please fill all fields.</div>
+        <button class="btn btn-purple btn-block" onclick="doRegister()">Create Account →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CLIENT APP
+══════════════════════════════════════ -->
+<div class="screen" id="clientApp" style="flex-direction:row;">
+  <aside class="sidebar" id="clientSidebar">
+    <div class="side-logo">
+      <div class="logo-icon">🎬</div>
+      <div><div class="logo-text" style="font-size:15px;">VidExchange</div><div class="logo-sub">Client Portal</div></div>
+    </div>
+    <nav>
+      <button class="nav-item active" data-v="c-dashboard" onclick="cView('c-dashboard',this)">📊 Dashboard</button>
+      <button class="nav-item" data-v="c-submit" onclick="cView('c-submit',this)">➕ Submit Video</button>
+      <button class="nav-item" data-v="c-analytics" onclick="cView('c-analytics',this)">📈 My Analytics</button>
+      <button class="nav-item" data-v="c-earn" onclick="cView('c-earn',this)">▶️ Watch & Earn</button>
+      <button class="nav-item" data-v="c-wallet" onclick="cView('c-wallet',this)">💎 My Points</button>
+    </nav>
+    <div class="side-foot">
+      <div class="user-chip">
+        <div class="avatar avatar-sm" id="cAvatarSide" style="background:var(--grad-purple);">A</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="cNameSide">User</div>
+          <div style="font-size:10.5px;color:var(--text-faint);">Client</div>
+        </div>
+        <button onclick="logout()" style="background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:16px;" title="Logout">↩</button>
+      </div>
+      <div class="theme-btn" onclick="toggleTheme()"><span id="themeLabel">🌙 Dark</span><span>⇄</span></div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="hamburger" onclick="document.getElementById('clientSidebar').classList.toggle('open')">☰</button>
+        <div class="topbar-left"><h2 id="cPageTitle">Dashboard</h2><p id="cPageSub">Your engagement overview</p></div>
+      </div>
+      <div class="topbar-right">
+        <div class="pts-pill">⚡ <span class="mono" id="cPtsDisplay">2,480</span> pts</div>
+        <div class="notif-btn">🔔<div class="notif-dot"></div></div>
+        <div class="avatar avatar-sm" id="cAvatarTop" style="background:var(--grad-purple);">A</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- CLIENT: DASHBOARD -->
+      <div class="view show" id="view-c-dashboard">
+        <div class="banner" style="background:linear-gradient(135deg,#2d0a52,#0a1a52);">
+          <div class="banner-blob" style="width:200px;height:200px;background:var(--purple);top:-60px;right:60px;"></div>
+          <div class="banner-blob" style="width:150px;height:150px;background:var(--pink);bottom:-40px;right:-20px;"></div>
+          <h2>Welcome back, <span id="cWelcomeName">User</span>! 👋</h2>
+          <p>You've watched <strong>14 videos</strong> this week and earned <strong>420 points</strong>. Keep going!</p>
+        </div>
+        <div class="grid g4" style="margin-bottom:20px;">
+          <div class="card stat-card glow-card-purple"><div class="sc-accent" style="background:var(--purple);"></div><div class="sc-icon" style="background:linear-gradient(135deg,rgba(168,85,247,.2),rgba(99,102,241,.2));">👁️</div><div class="sc-label">Total Viewers</div><div class="sc-val">1,284</div><div class="sc-delta delta-up">↑ 12% this week</div></div>
+          <div class="card stat-card glow-card-cyan"><div class="sc-accent" style="background:var(--cyan);"></div><div class="sc-icon" style="background:linear-gradient(135deg,rgba(6,182,212,.2),rgba(59,130,246,.2));">⏱️</div><div class="sc-label">Watch Hours</div><div class="sc-val">312.6</div><div class="sc-delta delta-up">↑ 8% this week</div></div>
+          <div class="card stat-card glow-card-pink"><div class="sc-accent" style="background:var(--pink);"></div><div class="sc-icon" style="background:linear-gradient(135deg,rgba(236,72,153,.2),rgba(168,85,247,.2));">✅</div><div class="sc-label">Full Watches</div><div class="sc-val">847</div><div class="sc-delta delta-neutral">66% completion</div></div>
+          <div class="card stat-card"><div class="sc-accent" style="background:var(--amber);"></div><div class="sc-icon" style="background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(249,115,22,.2));">⚡</div><div class="sc-label">Points Earned</div><div class="sc-val mono" id="cPtsCard">2,480</div><div class="sc-delta delta-up">↑ Earned today: +120</div></div>
+        </div>
+        <div class="grid g-2-1">
+          <div class="card">
+            <div class="sec-head"><div><div class="sec-title">My Videos Performance</div><div class="sec-sub">Videos you submitted</div></div><button class="btn btn-ghost btn-sm" onclick="cView('c-submit')">+ Submit New</button></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Video Title</th><th>Viewers</th><th>Completion</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td class="td-strong">How I Edit Travel Vlogs Fast</td><td>412</td><td><div class="prog-wrap"><div class="prog-fill" style="width:78%;background:var(--grad-purple);"></div></div>78%</td><td><span class="badge badge-green">Active</span></td></tr>
+                  <tr><td class="td-strong">Studio Setup for Beginners</td><td>318</td><td><div class="prog-wrap"><div class="prog-fill" style="width:63%;background:var(--grad-cyan);"></div></div>63%</td><td><span class="badge badge-green">Active</span></td></tr>
+                  <tr><td class="td-strong">Night Photography Tips</td><td>96</td><td><div class="prog-wrap"><div class="prog-fill" style="width:42%;background:var(--grad-amber);"></div></div>42%</td><td><span class="badge badge-amber">Under Review</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sec-head"><div class="sec-title">Recent Activity</div></div>
+            <div class="earn-row"><div class="earn-icon" style="background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(6,182,212,.15));">✅</div><div class="earn-detail"><div class="earn-title">Watched: Drone Cinematography</div><div class="earn-time">Today, 2:14 PM</div></div><div class="earn-amt" style="color:var(--green);">+18 pts</div></div>
+            <div class="earn-row"><div class="earn-icon" style="background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(99,102,241,.15));">✅</div><div class="earn-detail"><div class="earn-title">Watched: Synth Music Walkthrough</div><div class="earn-time">Today, 11:05 AM</div></div><div class="earn-amt" style="color:var(--green);">+24 pts</div></div>
+            <div class="earn-row"><div class="earn-icon" style="background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(249,115,22,.15));">📹</div><div class="earn-detail"><div class="earn-title">Video Submitted for Review</div><div class="earn-time">Yesterday</div></div><div class="earn-amt" style="color:var(--amber);">−50 pts</div></div>
+            <div class="earn-row"><div class="earn-icon" style="background:linear-gradient(135deg,rgba(6,182,212,.15),rgba(59,130,246,.15));">✅</div><div class="earn-detail"><div class="earn-title">Watched: Bookbinding Basics</div><div class="earn-time">Yesterday</div></div><div class="earn-amt" style="color:var(--green);">+16 pts</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLIENT: SUBMIT VIDEO -->
+      <div class="view" id="view-c-submit">
+        <div class="grid g2" style="align-items:start;">
+          <div class="card">
+            <div class="sec-head"><div><div class="sec-title">Submit a YouTube Video</div><div class="sec-sub">Other users will watch it and you earn visibility</div></div></div>
+            <div class="field"><label>YouTube Video URL</label><input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=..."></div>
+            <div class="grid g2">
+              <div class="field"><label>Category</label><select><option>Tutorial</option><option>Vlog</option><option>Music</option><option>Photography</option><option>Education</option><option>Gaming</option></select></div>
+              <div class="field"><label>Points Budget</label><input type="number" placeholder="500" value="500" min="100"></div>
+            </div>
+            <div class="field"><label>Video Description</label><textarea style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-elev);color:var(--text);resize:vertical;min-height:80px;font-size:13px;outline:none;" placeholder="Tell viewers what your video is about..."></textarea></div>
+            <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:11px;padding:12px 14px;margin-bottom:16px;font-size:12.5px;color:var(--amber);">⚠️ Submitting costs <strong>50 points</strong> from your balance. Your video will be reviewed before it goes live.</div>
+            <button class="btn btn-purple" onclick="submitVideo()">Submit for Engagement →</button>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,rgba(168,85,247,.08),rgba(99,102,241,.05));">
+              <div class="sec-title" style="margin-bottom:12px;">📋 How It Works</div>
+              <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--text-dim);">
+                <div style="display:flex;gap:10px;"><span style="color:var(--purple);font-weight:700;">1.</span><span>Submit your YouTube video URL with a points budget.</span></div>
+                <div style="display:flex;gap:10px;"><span style="color:var(--pink);font-weight:700;">2.</span><span>Admin reviews and approves your video (no spam or scam content).</span></div>
+                <div style="display:flex;gap:10px;"><span style="color:var(--cyan);font-weight:700;">3.</span><span>Other users watch your video and earn points for doing so.</span></div>
+                <div style="display:flex;gap:10px;"><span style="color:var(--green);font-weight:700;">4.</span><span>Your video gets real, tracked watch time and engagement data.</span></div>
+                <div style="display:flex;gap:10px;"><span style="color:var(--amber);font-weight:700;">5.</span><span>View detailed viewer analytics on the Analytics page.</span></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="sec-title" style="margin-bottom:12px;">🛡️ Anti-Cheat Rules</div>
+              <div style="font-size:12.5px;color:var(--text-dim);display:flex;flex-direction:column;gap:7px;">
+                <div>✓ Viewers must watch at least 75% of the video to earn points</div>
+                <div>✓ Same IP/device cannot watch the same video twice</div>
+                <div>✓ Skipping ahead is detected and invalidates the watch</div>
+                <div>✓ Unusually fast completion is flagged as bot activity</div>
+                <div>✓ Fake views are removed and points are refunded</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLIENT: ANALYTICS -->
+      <div class="view" id="view-c-analytics">
+        <div class="card" style="margin-bottom:16px;">
+          <div class="sec-head">
+            <div><div class="sec-title">How I Edit Travel Vlogs Fast</div><div class="sec-sub">Submitted 14 days ago · 8m 24s duration</div></div>
+            <div style="display:flex;gap:8px;"><button class="btn btn-ghost btn-sm">⬇ Excel</button><button class="btn btn-ghost btn-sm">⬇ PDF</button></div>
+          </div>
+          <div class="grid g4" style="margin-bottom:16px;">
+            <div class="card stat-card" style="padding:16px;"><div class="sc-label">Total Viewers</div><div class="sc-val" style="font-size:22px;">412</div></div>
+            <div class="card stat-card" style="padding:16px;"><div class="sc-label">Full Watches</div><div class="sc-val" style="font-size:22px;color:var(--green);">290</div></div>
+            <div class="card stat-card" style="padding:16px;"><div class="sc-label">Partial Watches</div><div class="sc-val" style="font-size:22px;color:var(--amber);">122</div></div>
+            <div class="card stat-card" style="padding:16px;"><div class="sc-label">Avg Completion</div><div class="sc-val" style="font-size:22px;color:var(--purple);">78%</div></div>
+          </div>
+          <div><div style="margin-bottom:8px;font-size:12px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;">Completion Milestones</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>25%</span><span style="color:var(--green);">398 viewers</span></div><div class="prog-wrap" style="height:10px;"><div class="prog-fill" style="width:97%;background:var(--grad-green);"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>50%</span><span style="color:var(--cyan);">371 viewers</span></div><div class="prog-wrap" style="height:10px;"><div class="prog-fill" style="width:90%;background:var(--grad-cyan);"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>75%</span><span style="color:var(--amber);">320 viewers</span></div><div class="prog-wrap" style="height:10px;"><div class="prog-fill" style="width:78%;background:var(--grad-amber);"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>100%</span><span style="color:var(--purple);">290 viewers</span></div><div class="prog-wrap" style="height:10px;"><div class="prog-fill" style="width:70%;background:var(--grad-purple);"></div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sec-head"><div class="sec-title">Viewer Activity Log</div>
+            <div class="pill-tabs"><button class="pill-tab active" onclick="filterLog('all',this)">All</button><button class="pill-tab" onclick="filterLog('full',this)">Full</button><button class="pill-tab" onclick="filterLog('partial',this)">Partial</button><button class="pill-tab" onclick="filterLog('flag',this)">Flagged</button></div>
+          </div>
+          <div class="table-wrap"><table><thead><tr><th>Viewer</th><th>Date & Time</th><th>Duration</th><th>% Watched</th><th>Status</th></tr></thead><tbody id="logTbody"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- CLIENT: WATCH & EARN -->
+      <div class="view" id="view-c-earn">
+        <div class="banner" style="background:linear-gradient(135deg,#0a2d1a,#0a1a2d);margin-bottom:20px;">
+          <div class="banner-blob" style="width:150px;height:150px;background:var(--green);top:-40px;right:40px;"></div>
+          <h2>Watch & Earn Points ▶️</h2>
+          <p>Watch videos from other creators. Earn points for every verified full watch. No skipping!</p>
+        </div>
+        <div class="video-grid" id="earnGrid"></div>
+      </div>
+
+      <!-- CLIENT: MY WALLET -->
+      <div class="view" id="view-c-wallet">
+        <div class="grid g2" style="align-items:start;">
+          <div>
+            <div class="card" style="background:linear-gradient(135deg,#1a0a3d,#0a1a3d);border:1px solid rgba(168,85,247,.3);margin-bottom:16px;">
+              <div style="font-size:11px;font-weight:700;color:rgba(168,85,247,.7);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Total Points Balance</div>
+              <div style="font-size:44px;font-weight:700;font-family:'Space Grotesk',sans-serif;color:#fff;" class="mono" id="walletPts">2,480</div>
+              <div style="font-size:12.5px;color:rgba(255,255,255,.4);margin-top:4px;">≈ PKR <span id="walletPKR">1,240</span> equivalent</div>
+              <div style="margin-top:20px;display:flex;gap:8px;">
+                <button class="btn btn-purple btn-sm">⚡ Earn More</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="sec-title" style="margin-bottom:12px;">Points History</div>
+              <div id="walletHistory">
+                <div class="earn-row"><div class="earn-icon" style="background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(6,182,212,.2));">✅</div><div class="earn-detail"><div class="earn-title">Watched Drone Cinematography</div><div class="earn-time">Today, 2:14 PM</div></div><div class="earn-amt" style="color:var(--green);">+18</div></div>
+                <div class="earn-row"><div class="earn-icon" style="background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(6,182,212,.2));">✅</div><div class="earn-detail"><div class="earn-title">Watched Synth Music Walkthrough</div><div class="earn-time">Today, 11:05 AM</div></div><div class="earn-amt" style="color:var(--green);">+24</div></div>
+                <div class="earn-row"><div class="earn-icon" style="background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(249,115,22,.2));">📹</div><div class="earn-detail"><div class="earn-title">Video Submission Fee</div><div class="earn-time">Yesterday</div></div><div class="earn-amt" style="color:var(--red);">−50</div></div>
+                <div class="earn-row"><div class="earn-icon" style="background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(6,182,212,.2));">✅</div><div class="earn-detail"><div class="earn-title">Watched Bookbinding Basics</div><div class="earn-time">Yesterday</div></div><div class="earn-amt" style="color:var(--green);">+16</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="background:linear-gradient(135deg,rgba(245,158,11,.05),rgba(249,115,22,.03));border-color:rgba(245,158,11,.2);">
+            <div style="font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;">Points Value Guide</div>
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--text-dim);">
+              <div style="display:flex;justify-content:space-between;"><span>Watch a full video</span><span style="color:var(--green);font-weight:700;">+10–30 pts</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>Submit a video</span><span style="color:var(--red);font-weight:700;">−50 pts</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>Refer a friend</span><span style="color:var(--cyan);font-weight:700;">+100 pts</span></div>
+              <div style="height:1px;background:var(--border);"></div>
+              <div style="display:flex;justify-content:space-between;"><span>500 pts</span><span style="color:var(--amber);font-weight:700;">→ Premium feature unlock</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /clientApp -->
+
+<!-- ══════════════════════════════════════
+     ADMIN APP
+══════════════════════════════════════ -->
+<div class="screen" id="adminApp" style="flex-direction:row;">
+  <aside class="sidebar" id="adminSidebar" style="background:linear-gradient(180deg,#0D0520,#050D1A);border-right:1px solid rgba(168,85,247,.2);">
+    <div class="side-logo">
+      <div class="logo-icon" style="background:var(--grad-pink);">🛡️</div>
+      <div><div class="logo-text" style="font-size:14px;color:#fff;">VidExchange</div><div class="logo-sub" style="color:rgba(168,85,247,.7);">Admin Panel</div></div>
+    </div>
+    <nav>
+      <div class="nav-group-label">Overview</div>
+      <button class="nav-item active" data-v="a-overview" onclick="aView('a-overview',this)">📊 Overview</button>
+      <button class="nav-item" data-v="a-earnings" onclick="aView('a-earnings',this)">💰 Earnings & Revenue</button>
+      <button class="nav-item" data-v="a-withdraw" onclick="aView('a-withdraw',this)">🏦 JazzCash Withdraw</button>
+      <div class="nav-group-label">Management</div>
+      <button class="nav-item" data-v="a-users" onclick="aView('a-users',this)">👥 Manage Users</button>
+      <button class="nav-item" data-v="a-videos" onclick="aView('a-videos',this)">🎬 Manage Videos</button>
+      <button class="nav-item" data-v="a-reports" onclick="aView('a-reports',this)">🚨 Reports <span class="nav-badge">3</span></button>
+      <div class="nav-group-label">Platform</div>
+      <button class="nav-item" data-v="a-settings" onclick="aView('a-settings',this)">⚙️ Settings</button>
+    </nav>
+    <div class="side-foot">
+      <div class="user-chip" style="background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.2);">
+        <div class="avatar avatar-sm" style="background:var(--grad-pink);">A</div>
+        <div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:600;color:#fff;">Admin</div><div style="font-size:10px;color:rgba(168,85,247,.6);">Super Admin</div></div>
+        <button onclick="logout()" style="background:none;border:none;color:rgba(168,85,247,.5);cursor:pointer;font-size:16px;" title="Logout">↩</button>
+      </div>
+      <div class="theme-btn" onclick="toggleTheme()"><span id="themeLabelAdmin">🌙 Dark</span><span>⇄</span></div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar" style="background:rgba(13,5,32,.8);border-bottom:1px solid rgba(168,85,247,.15);backdrop-filter:blur(10px);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="hamburger" onclick="document.getElementById('adminSidebar').classList.toggle('open')">☰</button>
+        <div class="topbar-left"><h2 id="aPageTitle">Admin Overview</h2><p id="aPageSub">Platform health at a glance</p></div>
+      </div>
+      <div class="topbar-right">
+        <div style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(6,182,212,.15));border:1px solid rgba(16,185,129,.3);font-size:13px;font-weight:700;color:var(--green);">💰 PKR <span class="mono">47,320</span></div>
+        <div class="notif-btn">🔔<div class="notif-dot"></div></div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ADMIN: OVERVIEW -->
+      <div class="view show" id="view-a-overview">
+        <div class="grid g4" style="margin-bottom:20px;">
+          <div class="card stat-card glow-card-purple"><div class="sc-accent" style="background:var(--purple);"></div><div class="sc-icon" style="background:linear-gradient(135deg,rgba(168,85,247,.2),rgba(99,102,241,.2));">👥</div><div class="sc-label">Total Users</div><div class="sc-val">9,402</div><div class="sc-delta delta-up">↑ 234 this week</div></div>
+          <div class="card stat-card glow-card-green"><div class="sc-accent" style="background:var(--green);"></div><div class="sc-icon" style="background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(6,182,212,.2));">🎬</div><div class="sc-label">Videos Live</div><div class="sc-val">2,118</div><div class="sc-delta delta-up">↑ 88 this week</div></div>
+          <div class="card stat-card glow-card-pink"><div class="sc-accent" style="background:var(--pink);"></div><div class="sc-icon" style="background:linear-gradient(135deg,rgba(236,72,153,.2),rgba(168,85,247,.2));">💎</div><div class="sc-label">Points Circulating</div><div class="sc-val mono">1.2M</div><div class="sc-delta delta-neutral">Platform total</div></div>
+          <div class="card stat-card glow-card-cyan"><div class="sc-accent" style="background:var(--cyan);"></div><div class="sc-icon" style="background:linear-gradient(135deg,rgba(6,182,212,.2),rgba(59,130,246,.2));">💰</div><div class="sc-label">Revenue (MTD)</div><div class="sc-val mono">PKR 47K</div><div class="sc-delta delta-up">↑ 18% vs last month</div></div>
+        </div>
+        <div class="grid g2">
+          <div class="card">
+            <div class="sec-head"><div class="sec-title">Revenue Breakdown</div></div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span>Video Submission Fees</span><span style="color:var(--purple);font-weight:700;">PKR 18,500</span></div><div class="prog-wrap" style="height:8px;"><div class="prog-fill" style="width:65%;background:var(--grad-purple);"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span>Premium Plan Subscriptions</span><span style="color:var(--pink);font-weight:700;">PKR 15,200</span></div><div class="prog-wrap" style="height:8px;"><div class="prog-fill" style="width:54%;background:var(--grad-pink);"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span>Google AdSense Revenue</span><span style="color:var(--cyan);font-weight:700;">PKR 8,620</span></div><div class="prog-wrap" style="height:8px;"><div class="prog-fill" style="width:30%;background:var(--grad-cyan);"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span>Banner Ads</span><span style="color:var(--amber);font-weight:700;">PKR 5,000</span></div><div class="prog-wrap" style="height:8px;"><div class="prog-fill" style="width:18%;background:var(--grad-amber);"></div></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sec-head"><div class="sec-title">Platform Health</div></div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;">Bot detection rate</span><span class="badge badge-green">98.2% clean</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;">Pending reviews</span><span class="badge badge-amber">14 videos</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;">Reported content</span><span class="badge badge-red">3 cases</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;">Suspended accounts</span><span class="badge badge-red">7 users</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;">Server uptime</span><span class="badge badge-green">99.9%</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;">Active sessions</span><span class="badge badge-purple">1,204 live</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN: EARNINGS -->
+      <div class="view" id="view-a-earnings">
+        <div class="grid g4" style="margin-bottom:20px;">
+          <div class="card stat-card glow-card-green"><div class="sc-icon" style="background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(6,182,212,.2));">💰</div><div class="sc-label">Total Earned (All Time)</div><div class="sc-val mono">PKR 2.4L</div><div class="sc-delta delta-up">↑ Since launch</div></div>
+          <div class="card stat-card glow-card-purple"><div class="sc-icon" style="background:linear-gradient(135deg,rgba(168,85,247,.2),rgba(99,102,241,.2));">📅</div><div class="sc-label">This Month</div><div class="sc-val mono">PKR 47,320</div><div class="sc-delta delta-up">↑ 18% vs last month</div></div>
+          <div class="card stat-card"><div class="sc-icon" style="background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(249,115,22,.2));">📤</div><div class="sc-label">Total Withdrawn</div><div class="sc-val mono">PKR 1.8L</div><div class="sc-delta delta-neutral">Via JazzCash</div></div>
+          <div class="card stat-card glow-card-cyan"><div class="sc-icon" style="background:linear-gradient(135deg,rgba(6,182,212,.2),rgba(59,130,246,.2));">🏦</div><div class="sc-label">Available to Withdraw</div><div class="sc-val mono" style="color:var(--green);">PKR 47,320</div><div class="sc-delta"><button class="btn btn-green btn-sm" onclick="aView('a-withdraw')">Withdraw Now</button></div></div>
+        </div>
+        <div class="card">
+          <div class="sec-head"><div class="sec-title">Earnings from Client Activity</div><div class="sec-sub">Every client action generates admin revenue</div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Source</th><th>Client</th><th>Action</th><th>Date</th><th>Admin Earns</th></tr></thead>
+              <tbody>
+                <tr><td class="td-strong">Video Submission</td><td>Sofia Reyes</td><td>Submitted "Travel Vlog Ep.5"</td><td>Today, 3:10 PM</td><td class="td-strong" style="color:var(--green);">PKR 250</td></tr>
+                <tr><td class="td-strong">Premium Upgrade</td><td>Marcus Webb</td><td>Upgraded to Pro Plan</td><td>Today, 1:45 PM</td><td class="td-strong" style="color:var(--green);">PKR 1,200</td></tr>
+                <tr><td class="td-strong">Video Submission</td><td>Priya Nandi</td><td>Submitted "Cooking Basics"</td><td>Yesterday</td><td class="td-strong" style="color:var(--green);">PKR 250</td></tr>
+                <tr><td class="td-strong">Ad Revenue Share</td><td>Platform wide</td><td>Banner & AdSense clicks</td><td>Yesterday</td><td class="td-strong" style="color:var(--green);">PKR 820</td></tr>
+                <tr><td class="td-strong">Video Submission</td><td>Tomasz Bik</td><td>Submitted "Street Photography"</td><td>2 days ago</td><td class="td-strong" style="color:var(--green);">PKR 250</td></tr>
+                <tr><td class="td-strong">Premium Upgrade</td><td>Hana Suzuki</td><td>Upgraded to Business Plan</td><td>3 days ago</td><td class="td-strong" style="color:var(--green);">PKR 2,500</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN: JAZZCASH WITHDRAW -->
+      <div class="view" id="view-a-withdraw">
+        <div class="grid g2" style="align-items:start;">
+          <div>
+            <div class="jc-card" style="margin-bottom:16px;">
+              <div class="jc-logo-row">
+                <div class="jc-logo">JazzCash</div>
+                <div class="jc-badge">✓ Linked Account</div>
+              </div>
+              <div style="font-size:11px;color:rgba(168,85,247,.6);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Available Balance</div>
+              <div style="font-size:36px;font-weight:700;font-family:'Space Grotesk',sans-serif;color:#fff;">PKR <span class="mono">47,320</span></div>
+              <div style="font-size:12px;color:rgba(255,255,255,.35);margin-top:4px;margin-bottom:20px;">Admin revenue from client activity</div>
+              <div class="withdraw-info">
+                <div class="wi-item"><div class="wi-label">JazzCash Account</div><div class="wi-val" style="font-size:13px;">03XX-XXXXXXX</div></div>
+                <div class="wi-item"><div class="wi-label">Account Name</div><div class="wi-val" style="font-size:13px;">Ghulam Mujtaba</div></div>
+                <div class="wi-item"><div class="wi-label">Last Withdrawal</div><div class="wi-val" style="font-size:13px;">PKR 15,000</div></div>
+                <div class="wi-item"><div class="wi-label">Withdrawn On</div><div class="wi-val" style="font-size:13px;">Jun 28, 2026</div></div>
+              </div>
+              <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:6px;">Enter withdrawal amount (PKR)</div>
+              <input class="withdraw-input" type="number" id="withdrawAmt" placeholder="e.g. 5000" min="500" max="47320">
+              <div style="font-size:11.5px;color:rgba(255,255,255,.3);margin-bottom:14px;">Min: PKR 500 · Max: PKR 47,320 · Processing: 1–3 hours</div>
+              <button class="btn btn-purple btn-block" onclick="doWithdraw()">🏦 Withdraw via JazzCash</button>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:16px;">
+              <div class="sec-title" style="margin-bottom:14px;">Withdrawal History</div>
+              <div class="earn-row"><div class="earn-icon" style="background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(6,182,212,.2));">✅</div><div class="earn-detail"><div class="earn-title">PKR 15,000 withdrawn</div><div class="earn-time">Jun 28, 2026 · JazzCash</div></div><div class="earn-amt" style="color:var(--green);">Done</div></div>
+              <div class="earn-row"><div class="earn-icon" style="background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(6,182,212,.2));">✅</div><div class="earn-detail"><div class="earn-title">PKR 22,000 withdrawn</div><div class="earn-time">Jun 15, 2026 · JazzCash</div></div><div class="earn-amt" style="color:var(--green);">Done</div></div>
+              <div class="earn-row"><div class="earn-icon" style="background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(6,182,212,.2));">✅</div><div class="earn-detail"><div class="earn-title">PKR 30,000 withdrawn</div><div class="earn-time">May 30, 2026 · JazzCash</div></div><div class="earn-amt" style="color:var(--green);">Done</div></div>
+              <div class="earn-row"><div class="earn-icon" style="background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(249,115,22,.2));">⏳</div><div class="earn-detail"><div class="earn-title">PKR 18,000 withdrawn</div><div class="earn-time">May 12, 2026 · JazzCash</div></div><div class="earn-amt" style="color:var(--amber);">Done</div></div>
+            </div>
+            <div class="card" style="background:linear-gradient(135deg,rgba(16,185,129,.05),rgba(6,182,212,.03));border-color:rgba(16,185,129,.2);">
+              <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:10px;">💡 How Admin Earns</div>
+              <div style="font-size:12.5px;color:var(--text-dim);display:flex;flex-direction:column;gap:7px;">
+                <div>📹 Client video submission → <strong style="color:var(--green);">PKR 250/video</strong></div>
+                <div>💎 Premium plan sale → <strong style="color:var(--green);">PKR 1,200–2,500</strong></div>
+                <div>📢 AdSense & banner ads → <strong style="color:var(--green);">Daily revenue</strong></div>
+                <div>👥 All client activity funds admin's balance which you can withdraw anytime via JazzCash.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN: USERS -->
+      <div class="view" id="view-a-users">
+        <div class="card">
+          <div class="sec-head"><div><div class="sec-title">All Users</div><div class="sec-sub">9,402 registered accounts</div></div><input style="max-width:220px;padding:8px 12px;border-radius:9px;border:1px solid var(--border);background:var(--bg-elev);color:var(--text);font-size:13px;outline:none;" placeholder="🔍 Search users..."></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>User</th><th>Email</th><th>Points</th><th>Videos</th><th>Joined</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="avatar avatar-sm" style="background:var(--grad-purple);">SR</div><span class="td-strong">Sofia Reyes</span></div></td><td>sofia@gmail.com</td><td class="mono">3,240</td><td>5</td><td>Mar 2026</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-ghost btn-sm">Manage</button></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="avatar avatar-sm" style="background:var(--grad-cyan);">MW</div><span class="td-strong">Marcus Webb</span></div></td><td>marcus@email.com</td><td class="mono">960</td><td>2</td><td>Apr 2026</td><td><span class="badge badge-amber">Warning</span></td><td><button class="btn btn-ghost btn-sm">Manage</button></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="avatar avatar-sm" style="background:var(--grad-pink);">PN</div><span class="td-strong">Priya Nandi</span></div></td><td>priya@mail.com</td><td class="mono">5,100</td><td>8</td><td>Feb 2026</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-ghost btn-sm">Manage</button></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="avatar avatar-sm" style="background:var(--grad-amber);">TB</div><span class="td-strong">Tomasz Bik</span></div></td><td>tomasz@web.pl</td><td class="mono">0</td><td>1</td><td>May 2026</td><td><span class="badge badge-red">Suspended</span></td><td><button class="btn btn-ghost btn-sm">Manage</button></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="avatar avatar-sm" style="background:var(--grad-green);">HS</div><span class="td-strong">Hana Suzuki</span></div></td><td>hana@jp.net</td><td class="mono">2,080</td><td>3</td><td>Jan 2026</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-ghost btn-sm">Manage</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN: VIDEOS -->
+      <div class="view" id="view-a-videos">
+        <div class="card">
+          <div class="sec-head"><div><div class="sec-title">All Videos</div><div class="sec-sub">2,118 videos on the platform</div></div>
+            <div class="pill-tabs"><button class="pill-tab active" onclick="this.closest('.pill-tabs').querySelectorAll('.pill-tab').forEach(b=>b.classList.remove('active'));this.classList.add('active')">All</button><button class="pill-tab" onclick="this.closest('.pill-tabs').querySelectorAll('.pill-tab').forEach(b=>b.classList.remove('active'));this.classList.add('active')">Pending</button><button class="pill-tab" onclick="this.closest('.pill-tabs').querySelectorAll('.pill-tab').forEach(b=>b.classList.remove('active'));this.classList.add('active')">Live</button><button class="pill-tab" onclick="this.closest('.pill-tabs').querySelectorAll('.pill-tab').forEach(b=>b.classList.remove('active'));this.classList.add('active')">Flagged</button></div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Title</th><th>Owner</th><th>Category</th><th>Viewers</th><th>Completion</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td class="td-strong">How I Edit Travel Vlogs Fast</td><td>Sofia Reyes</td><td>Tutorial</td><td>412</td><td>78%</td><td><span class="badge badge-green">Live</span></td><td><button class="btn btn-ghost btn-sm">Review</button></td></tr>
+                <tr><td class="td-strong">Studio Setup for Beginners</td><td>Priya Nandi</td><td>Tutorial</td><td>318</td><td>63%</td><td><span class="badge badge-green">Live</span></td><td><button class="btn btn-ghost btn-sm">Review</button></td></tr>
+                <tr><td class="td-strong">Drone Cinematography Guide</td><td>Marcus Webb</td><td>Photography</td><td>201</td><td>71%</td><td><span class="badge badge-amber">Pending</span></td><td><button class="btn btn-ghost btn-sm">Approve</button></td></tr>
+                <tr><td class="td-strong">Bookbinding for Beginners</td><td>Hana Suzuki</td><td>Education</td><td>196</td><td>85%</td><td><span class="badge badge-green">Live</span></td><td><button class="btn btn-ghost btn-sm">Review</button></td></tr>
+                <tr><td class="td-strong">Suspicious View Pattern #12</td><td>user_anon99</td><td>—</td><td>0</td><td>—</td><td><span class="badge badge-red">Flagged</span></td><td><button class="btn btn-ghost btn-sm">Remove</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN: REPORTS -->
+      <div class="view" id="view-a-reports">
+        <div class="card">
+          <div class="sec-head"><div><div class="sec-title">Reported Content</div><div class="sec-sub">3 open cases requiring action</div></div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Video</th><th>Reported By</th><th>Reason</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td class="td-strong">Color Grading Speedrun</td><td>jordan_t</td><td>Suspected bot watch pattern</td><td>Today</td><td><span class="badge badge-red">Open</span></td><td><div style="display:flex;gap:6px;"><button class="btn btn-ghost btn-sm">Remove</button><button class="btn btn-ghost btn-sm">Dismiss</button></div></td></tr>
+                <tr><td class="td-strong">Home Acoustic Treatment</td><td>mei.lin</td><td>Misleading thumbnail</td><td>Yesterday</td><td><span class="badge badge-red">Open</span></td><td><div style="display:flex;gap:6px;"><button class="btn btn-ghost btn-sm">Remove</button><button class="btn btn-ghost btn-sm">Dismiss</button></div></td></tr>
+                <tr><td class="td-strong">Daily Vlog #44</td><td>System</td><td>Abnormal watch velocity detected</td><td>2 days ago</td><td><span class="badge badge-amber">Investigating</span></td><td><div style="display:flex;gap:6px;"><button class="btn btn-ghost btn-sm">Remove</button><button class="btn btn-ghost btn-sm">Dismiss</button></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN: SETTINGS -->
+      <div class="view" id="view-a-settings">
+        <div class="grid g2" style="align-items:start;">
+          <div class="card">
+            <div class="sec-title" style="margin-bottom:16px;">⚙️ Platform Settings</div>
+            <div class="field"><label>Points per full watch</label><input type="number" value="20"></div>
+            <div class="field"><label>Submission fee (points)</label><input type="number" value="50"></div>
+            <div class="field"><label>Min watch % to earn points</label><input type="number" value="75"></div>
+            <div class="field"><label>Max videos per user per day</label><input type="number" value="3"></div>
+            <div class="field"><label>JazzCash Account Number</label><input type="text" placeholder="03XX-XXXXXXX"></div>
+            <button class="btn btn-purple">Save Settings</button>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:16px;">
+              <div class="sec-title" style="margin-bottom:14px;">💳 Premium Plans</div>
+              <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--text-dim);">
+                <div style="padding:12px;border-radius:10px;background:var(--bg-elev);border:1px solid var(--border);"><div style="font-weight:700;color:var(--text);">Basic — Free</div><div>3 submissions/month · Standard analytics</div></div>
+                <div style="padding:12px;border-radius:10px;background:linear-gradient(135deg,rgba(168,85,247,.08),rgba(99,102,241,.05));border:1px solid rgba(168,85,247,.2);"><div style="font-weight:700;color:var(--purple);">Pro — PKR 1,200/mo</div><div>Unlimited submissions · Full analytics · Priority review</div></div>
+                <div style="padding:12px;border-radius:10px;background:linear-gradient(135deg,rgba(236,72,153,.08),rgba(168,85,247,.05));border:1px solid rgba(236,72,153,.2);"><div style="font-weight:700;color:var(--pink);">Business — PKR 2,500/mo</div><div>Everything in Pro · Banner ad placement · Team access</div></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="sec-title" style="margin-bottom:12px;">🚪 Admin Account</div>
+              <div style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px;">Logged in as: <strong style="color:var(--text);">ghulammujtaba30@gmail.com</strong></div>
+              <button class="btn btn-ghost btn-sm">Change Password</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /adminApp -->
+
+<!-- WITHDRAW SUCCESS MODAL -->
+<div class="modal-overlay" id="withdrawModal">
+  <div class="modal">
+    <div class="success-icon">✅</div>
+    <h2 class="modal-title" style="text-align:center;">Withdrawal Requested!</h2>
+    <p class="modal-sub" style="text-align:center;">Your withdrawal of <strong id="wdAmt">PKR 0</strong> has been sent to your JazzCash account. Processing time: 1–3 hours.</p>
+    <button class="btn btn-green btn-block" onclick="document.getElementById('withdrawModal').classList.remove('show')">Done ✓</button>
+  </div>
+</div>
+
+<!-- SUBMIT SUCCESS MODAL -->
+<div class="modal-overlay" id="submitModal">
+  <div class="modal">
+    <div class="success-icon">🎬</div>
+    <h2 class="modal-title" style="text-align:center;">Video Submitted!</h2>
+    <p class="modal-sub" style="text-align:center;">Your video is now under review by the admin. It will go live in the Watch & Earn feed once approved. 50 points have been deducted.</p>
+    <button class="btn btn-purple btn-block" onclick="document.getElementById('submitModal').classList.remove('show')">Got it!</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   IN-MEMORY SESSION — NO localStorage
+══════════════════════════════════════ */
+const ADMIN_EMAIL = 'ghulammujtaba30@gmail.com';
+const ADMIN_PASS  = 'Sahibzada@6060';
+
+// In-memory user registry (session only — resets on page reload)
+const users = [
+  { name:'Demo User', email:'user@demo.com', pass:'demo1234', pts:2480 }
+];
+
+let session = null; // { role:'admin'|'user', name, email, pts }
+
+/* ── AUTH ── */
+function switchAuthTab(tab, el){
+  document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('loginForm').style.display    = tab==='login'    ? '' : 'none';
+  document.getElementById('registerForm').style.display = tab==='register' ? '' : 'none';
+}
+
+function doLogin(){
+  const email = document.getElementById('li-email').value.trim();
+  const pass  = document.getElementById('li-pass').value;
+  const err   = document.getElementById('li-err');
+  err.style.display = 'none';
+
+  if(!email || !pass){ showErr(err,'Please enter email and password.'); return; }
+
+  if(email.toLowerCase()===ADMIN_EMAIL.toLowerCase() && pass===ADMIN_PASS){
+    session = { role:'admin', name:'Admin', email };
+    hideAuth(); showAdmin(); return;
+  }
+  const u = users.find(u=>u.email.toLowerCase()===email.toLowerCase() && u.pass===pass);
+  if(u){
+    session = { role:'user', name:u.name, email:u.email, pts:u.pts };
+    hideAuth(); showClient(); return;
+  }
+  showErr(err,'Incorrect email or password. Please try again.');
+}
+
+function doRegister(){
+  const name  = document.getElementById('rg-name').value.trim();
+  const email = document.getElementById('rg-email').value.trim();
+  const pass  = document.getElementById('rg-pass').value;
+  const err   = document.getElementById('rg-err');
+  err.style.display='none';
+
+  if(!name||!email||!pass){ showErr(err,'Please fill in all fields.'); return; }
+  if(pass.length<8){ showErr(err,'Password must be at least 8 characters.'); return; }
+  if(email.toLowerCase()===ADMIN_EMAIL.toLowerCase()){ showErr(err,'This email is reserved.'); return; }
+  if(users.find(u=>u.email.toLowerCase()===email.toLowerCase())){ showErr(err,'Email already registered.'); return; }
+
+  users.push({ name, email, pass, pts:500 });
+  session = { role:'user', name, email, pts:500 };
+  hideAuth(); showClient();
+}
+
+function showErr(el, msg){ el.textContent=msg; el.style.display='block'; }
+function hideAuth(){ document.getElementById('authScreen').classList.remove('show'); }
+
+function showClient(){
+  document.getElementById('clientApp').classList.add('show');
+  document.getElementById('cNameSide').textContent  = session.name;
+  document.getElementById('cWelcomeName').textContent = session.name.split(' ')[0];
+  const init = session.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('cAvatarSide').textContent = init;
+  document.getElementById('cAvatarTop').textContent  = init;
+  updatePts(session.pts);
+}
+
+function showAdmin(){
+  document.getElementById('adminApp').classList.add('show');
+}
+
+function logout(){
+  session = null;
+  document.getElementById('clientApp').classList.remove('show');
+  document.getElementById('adminApp').classList.remove('show');
+  document.getElementById('authScreen').classList.add('show');
+  document.getElementById('li-email').value='';
+  document.getElementById('li-pass').value='';
+}
+
+/* ── CLIENT NAVIGATION ── */
+const clientMeta = {
+  'c-dashboard':['Dashboard','Your engagement overview'],
+  'c-submit':   ['Submit Video','Add your YouTube video for engagement'],
+  'c-analytics':['My Analytics','Detailed viewer data for your videos'],
+  'c-earn':     ['Watch & Earn','Watch videos and earn points'],
+  'c-wallet':   ['My Points','Your points balance and history'],
+};
+function cView(id, el){
+  document.querySelectorAll('#clientApp .view').forEach(v=>v.classList.remove('show'));
+  document.getElementById('view-'+id).classList.add('show');
+  document.querySelectorAll('#clientApp .nav-item').forEach(n=>n.classList.remove('active'));
+  (el||document.querySelector('#clientApp .nav-item[data-v="'+id+'"]')).classList.add('active');
+  const m=clientMeta[id]||['',''];
+  document.getElementById('cPageTitle').textContent=m[0];
+  document.getElementById('cPageSub').textContent=m[1];
+  document.getElementById('clientSidebar').classList.remove('open');
+}
+
+/* ── ADMIN NAVIGATION ── */
+const adminMeta = {
+  'a-overview': ['Admin Overview','Platform health at a glance'],
+  'a-earnings': ['Earnings & Revenue','All income from client activity'],
+  'a-withdraw': ['JazzCash Withdrawal','Withdraw your earnings to JazzCash'],
+  'a-users':    ['Manage Users','View and control all user accounts'],
+  'a-videos':   ['Manage Videos','Review, approve, and remove videos'],
+  'a-reports':  ['Reported Content','Cases requiring moderation'],
+  'a-settings': ['Platform Settings','Configure points, fees, and plans'],
+};
+function aView(id, el){
+  document.querySelectorAll('#adminApp .view').forEach(v=>v.classList.remove('show'));
+  document.getElementById('view-'+id).classList.add('show');
+  document.querySelectorAll('#adminApp .nav-item').forEach(n=>n.classList.remove('active'));
+  (el||document.querySelector('#adminApp .nav-item[data-v="'+id+'"]')).classList.add('active');
+  const m=adminMeta[id]||['',''];
+  document.getElementById('aPageTitle').textContent=m[0];
+  document.getElementById('aPageSub').textContent=m[1];
+  document.getElementById('adminSidebar').classList.remove('open');
+}
+
+/* ── POINTS ── */
+function updatePts(pts){
+  const fmt = pts.toLocaleString();
+  document.getElementById('cPtsDisplay').textContent = fmt;
+  document.getElementById('cPtsCard').textContent    = fmt;
+  document.getElementById('walletPts').textContent   = fmt;
+  document.getElementById('walletPKR').textContent   = (pts/2).toLocaleString();
+}
+
+/* ── VIEWER LOG ── */
+const logData=[
+  {init:'SR',name:'Sofia Reyes',date:'Jul 4, 2026 · 8:42 PM',dur:'7m 58s',pct:100,st:'full'},
+  {init:'MW',name:'Marcus Webb',date:'Jul 4, 2026 · 6:10 PM',dur:'5m 18s',pct:68,st:'partial'},
+  {init:'PN',name:'Priya Nandi',date:'Jul 3, 2026 · 11:55 AM',dur:'8m 00s',pct:100,st:'full'},
+  {init:'TB',name:'Tomasz Bik',date:'Jul 3, 2026 · 9:05 PM',dur:'3m 44s',pct:50,st:'partial'},
+  {init:'HS',name:'Hana Suzuki',date:'Jul 2, 2026 · 7:48 PM',dur:'8m 00s',pct:100,st:'full'},
+  {init:'??',name:'unverified_99',date:'Jul 2, 2026 · 3:01 PM',dur:'0m 08s',pct:100,st:'flag'},
+];
+function filterLog(f,el){
+  document.querySelectorAll('.pill-tabs .pill-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const rows=logData.filter(l=>f==='all'||l.st===f);
+  const badge={full:'<span class="badge badge-green">Fully Watched</span>',partial:'<span class="badge badge-amber">Partial</span>',flag:'<span class="badge badge-red">Flagged — Bot</span>'};
+  document.getElementById('logTbody').innerHTML=rows.map(l=>`
+    <tr>
+      <td><div style="display:flex;align-items:center;gap:8px;"><div class="avatar avatar-sm" style="background:var(--grad-purple);width:26px;height:26px;font-size:9px;">${l.init}</div><span class="td-strong">${l.name}</span></div></td>
+      <td>${l.date}</td><td class="mono">${l.dur}</td><td class="mono">${l.pct}%</td><td>${badge[l.st]}</td>
+    </tr>`).join('')||'<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-faint);">No records.</td></tr>';
+}
+filterLog('all',{classList:{add:()=>{},remove:()=>{}}});
+
+/* ── EARN GRID ── */
+const tasks=[
+  {title:'Drone Cinematography Masterclass',author:'Ben Ortiz',dur:'6:14',pts:22,emoji:'🚁'},
+  {title:'Synth Pop Production Walkthrough',author:'Lina Voss',dur:'8:40',pts:26,emoji:'🎹'},
+  {title:'Bookbinding for Absolute Beginners',author:'Claire D.',dur:'5:05',pts:16,emoji:'📚'},
+  {title:'Street Photography in Low Light',author:'Yuki Sato',dur:'4:18',pts:14,emoji:'📸'},
+  {title:'Watercolor Landscape Techniques',author:'Ahmed K.',dur:'7:30',pts:20,emoji:'🎨'},
+  {title:'Minimal Home Office Setup 2026',author:'Sara Lee',dur:'5:55',pts:18,emoji:'💻'},
+];
+document.getElementById('earnGrid').innerHTML=tasks.map(t=>`
+  <div class="vc">
+    <div class="vc-thumb"><div style="font-size:48px;">${t.emoji}</div><div class="play-btn" style="position:absolute;">▶</div></div>
+    <div class="vc-body"><div class="vc-title">${t.title}</div><div class="vc-meta">${t.author} · ${t.dur}</div></div>
+    <div class="vc-foot"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green);font-weight:700;">+${t.pts} pts</span><button class="btn btn-purple btn-sm">Watch Now</button></div>
+  </div>`).join('');
+
+/* ── WITHDRAW ── */
+function doWithdraw(){
+  const amt=parseInt(document.getElementById('withdrawAmt').value)||0;
+  if(amt<500){alert('Minimum withdrawal is PKR 500.'); return;}
+  if(amt>47320){alert('Amount exceeds available balance.'); return;}
+  document.getElementById('wdAmt').textContent='PKR '+amt.toLocaleString();
+  document.getElementById('withdrawModal').classList.add('show');
+  document.getElementById('withdrawAmt').value='';
+}
+
+/* ── SUBMIT VIDEO ── */
+function submitVideo(){
+  const url=document.getElementById('yt-url').value.trim();
+  if(!url||!url.includes('youtube.com')&&!url.includes('youtu.be')){
+    alert('Please enter a valid YouTube URL.'); return;
+  }
+  document.getElementById('submitModal').classList.add('show');
+  document.getElementById('yt-url').value='';
+  if(session){ session.pts=Math.max(0,session.pts-50); updatePts(session.pts); }
+}
+
+/* ── THEME ── */
+function toggleTheme(){
+  const html=document.documentElement;
+  const isLight=html.getAttribute('data-theme')==='light';
+  html.setAttribute('data-theme',isLight?'dark':'light');
+  const label=isLight?'🌙 Dark':'☀️ Light';
+  document.getElementById('themeLabel').textContent=label;
+  const al=document.getElementById('themeLabelAdmin');
+  if(al) al.textContent=label;
+}
+
+/* ── CLOSE MODAL ON OVERLAY CLICK ── */
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('show'); });
+});
+</script>
+</body>
+</html>
